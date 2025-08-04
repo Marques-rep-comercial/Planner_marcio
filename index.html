@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planner Alta Performance 30D</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5;
+        }
+        .task-item, .edit-mode-controls button {
+            transition: all 0.2s ease-in-out;
+        }
+        .task-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .progress-bar-fill {
+            transition: width 0.5s ease-in-out;
+        }
+        .day-selector button.active {
+            background-color: #1d4ed8;
+            color: white;
+            font-weight: 600;
+        }
+        .motivational-quote {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .modal-backdrop {
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+        .spinner {
+            border-top-color: #3498db;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <div class="max-w-4xl mx-auto bg-white rounded-2xl shadow-lg overflow-hidden">
+        <header class="p-6 md:p-8 bg-gray-800 text-white">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-2xl md:text-3xl font-bold">Planner Alta Performance 30D</h1>
+                    <p class="mt-2 text-gray-300">Personalize sua rotina para máxima performance.</p>
+                </div>
+                <button id="toggleEditMode" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg">
+                    ✏️ Editar
+                </button>
+            </div>
+        </header>
+
+        <div class="p-6 md:p-8">
+            <!-- Controles do Modo de Edição -->
+            <div id="editModeControls" class="hidden bg-blue-50 p-4 rounded-lg mb-6 text-center space-x-4">
+                 <button id="saveAsDefaultButton" class="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg">Salvar como Padrão</button>
+                 <button id="resetToDefaultButton" class="bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-2 px-4 rounded-lg">Resetar para Padrão</button>
+            </div>
+
+            <!-- Seletor de Dias -->
+            <div class="mb-6">
+                <h2 class="text-xl font-semibold mb-3 text-gray-700">Selecione o Dia:</h2>
+                <div id="daySelector" class="flex flex-wrap gap-2"></div>
+            </div>
+
+            <!-- Progresso do Dia -->
+            <div class="mb-8">
+                <h3 id="progressTitle" class="text-lg font-semibold text-gray-700 mb-2"></h3>
+                <div class="w-full bg-gray-200 rounded-full h-4">
+                    <div id="progressBar" class="bg-blue-600 h-4 rounded-full progress-bar-fill"></div>
+                </div>
+            </div>
+
+            <!-- Lista de Tarefas -->
+            <div id="taskList" class="space-y-4"></div>
+            
+            <!-- Formulário para Adicionar Tarefa (Modo Edição) -->
+            <form id="addTaskForm" class="hidden mt-6 p-4 border-2 border-dashed rounded-lg">
+                <h4 class="font-semibold mb-2">Adicionar Nova Tarefa</h4>
+                <div class="flex flex-col md:flex-row gap-4">
+                    <input type="text" id="newTaskTime" placeholder="Ex: 22:00 - 22:30" class="border p-2 rounded-md flex-1">
+                    <input type="text" id="newTaskDesc" placeholder="Descrição da tarefa" class="border p-2 rounded-md flex-grow-[2]">
+                    <button type="submit" class="bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600">Adicionar</button>
+                </div>
+            </form>
+
+            <!-- Foco do Dia com IA -->
+            <div class="mt-8 p-6 rounded-xl motivational-quote text-white text-center">
+                <h4 class="font-semibold mb-2">✨ Foco do Dia com IA</h4>
+                <p id="motivationalQuote" class="text-lg italic"></p>
+            </div>
+            
+            <div class="mt-8 text-center">
+                <button id="resetProgressButton" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-6 rounded-lg transition-colors">
+                    Resetar Progresso do Dia
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modais (Gemini, Confirmação) -->
+    <div id="geminiModal" class="fixed inset-0 z-50 hidden items-center justify-center modal-backdrop">
+        <div class="bg-white rounded-lg shadow-xl p-6 w-11/12 md:w-1/2 max-w-2xl transform transition-all">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-gray-800">✨ Estrategista de Vendas com IA</h3>
+                <button id="closeModalButton" class="text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
+            </div>
+            <p class="text-gray-600 mb-4">Descreva seu principal objetivo de prospecção para hoje. A IA irá gerar 3 estratégias de abordagem para você.</p>
+            <textarea id="userInput" class="w-full p-2 border rounded-md" rows="3" placeholder="Ex: Visitar 3 lojas de material de construção na zona sul para apresentar nossa nova linha de painéis de LED."></textarea>
+            <button id="generateButton" class="w-full mt-4 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center">
+                <span id="generateButtonText">Gerar Estratégias</span>
+                <div id="loadingSpinner" class="spinner h-5 w-5 ml-3 border-4 rounded-full hidden"></div>
+            </button>
+            <div id="geminiResult" class="mt-4 p-4 bg-gray-100 rounded-md h-48 overflow-y-auto"></div>
+        </div>
+    </div>
+    
+    <div id="confirmResetModal" class="fixed inset-0 z-50 hidden items-center justify-center modal-backdrop">
+        <div class="bg-white rounded-lg shadow-xl p-6 w-11/12 max-w-sm">
+            <h3 class="text-lg font-semibold mb-4">Confirmar Ação</h3>
+            <p id="confirmResetText" class="text-gray-600 mb-6"></p>
+            <div class="flex justify-end gap-4">
+                <button id="cancelResetButton" class="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300">Cancelar</button>
+                <button id="confirmResetAction" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // --- ELEMENT SELECTORS ---
+            const daySelector = document.getElementById('daySelector');
+            const taskList = document.getElementById('taskList');
+            const progressBar = document.getElementById('progressBar');
+            const progressTitle = document.getElementById('progressTitle');
+            const motivationalQuote = document.getElementById('motivationalQuote');
+            const toggleEditMode = document.getElementById('toggleEditMode');
+            const editModeControls = document.getElementById('editModeControls');
+            const saveAsDefaultButton = document.getElementById('saveAsDefaultButton');
+            const resetToDefaultButton = document.getElementById('resetToDefaultButton');
+            const addTaskForm = document.getElementById('addTaskForm');
+            const geminiModal = document.getElementById('geminiModal');
+            const closeModalButton = document.getElementById('closeModalButton');
+            const generateButton = document.getElementById('generateButton');
+            const generateButtonText = document.getElementById('generateButtonText');
+            const loadingSpinner = document.getElementById('loadingSpinner');
+            const userInput = document.getElementById('userInput');
+            const geminiResult = document.getElementById('geminiResult');
+            const confirmResetModal = document.getElementById('confirmResetModal');
+            const confirmResetText = document.getElementById('confirmResetText');
+            const cancelResetButton = document.getElementById('cancelResetButton');
+            const confirmResetAction = document.getElementById('confirmResetAction');
+            const resetProgressButton = document.getElementById('resetProgressButton');
+
+            // --- STATE VARIABLES ---
+            let currentDay = 1;
+            const totalDays = 30;
+            let isEditMode = false;
+            let currentSchedule = [];
+            let confirmCallback = null;
+
+            const initialSchedule = [
+                { time: '05:00 - 06:00', task: 'Acordar, Meditar & Visualizar Metas', icon: '🧘' },
+                { time: '06:00 - 07:00', task: 'Estudo de Inteligência Artificial (Foco em Vendas)', icon: '🤖' },
+                { time: '07:00 - 08:00', task: 'Levar o filho para a escola', icon: '🚗' },
+                { time: '08:00 - 09:00', task: 'Prospecção e Planejamento do Dia de Vendas', icon: '📈', gemini: true },
+                { time: '09:00 - 12:30', task: 'Trabalho de Representação (Visitas/Ligações)', icon: '💼' },
+                { time: '12:30 - 13:00', task: 'Almoço', icon: ' pranzo' },
+                { time: '13:00 - 16:00', task: 'Trabalho de Representação (Follow-up/Relatórios)', icon: '📊' },
+                { time: '16:00 - 16:30', task: 'Organização para o dia seguinte', icon: '🗒️' },
+                { time: '16:30 - 17:30', task: 'Deslocamento (Ouvir Podcast/Audiobook)', icon: '🎧' },
+                { time: '17:30 - 18:30', task: 'Estudo de Idioma', icon: '🌐' },
+                { time: '18:30 - 19:00', task: 'Preparação para a academia / Lanche', icon: '🍌' },
+                { time: '19:00 - 20:30', task: 'Treino na Academia', icon: '💪' },
+                { time: '20:30 - 21:30', task: 'Administração de Redes Sociais Profissionais', icon: '📱' },
+                { time: '21:30 - 22:00', task: 'Leitura / Relaxamento / Preparar para dormir', icon: '📚' }
+            ];
+
+            // --- GEMINI API LOGIC ---
+            const API_KEY = "";
+            const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${API_KEY}`;
+            
+            async function callGemini(prompt, retries = 3, delay = 1000) {
+                try {
+                    const payload = { contents: [{ parts: [{ text: prompt }] }] };
+                    const response = await fetch(API_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    const result = await response.json();
+                    if (result.candidates && result.candidates[0]?.content.parts[0]?.text) {
+                        return result.candidates[0].content.parts[0].text;
+                    }
+                    throw new Error("Resposta da API inválida.");
+                } catch (error) {
+                    if (retries > 0) {
+                        await new Promise(res => setTimeout(res, delay));
+                        return callGemini(prompt, retries - 1, delay * 2);
+                    }
+                    console.error("Erro ao chamar a API Gemini:", error);
+                    return "Desculpe, a IA não está disponível no momento.";
+                }
+            }
+
+            async function generateSalesStrategy() {
+                const objective = userInput.value;
+                if (!objective.trim()) {
+                    geminiResult.innerHTML = "Por favor, insira seu objetivo.";
+                    return;
+                }
+                loadingSpinner.classList.remove('hidden');
+                generateButton.disabled = true;
+                generateButtonText.textContent = 'Gerando...';
+                geminiResult.innerHTML = '';
+                const prompt = `Aja como um coach de vendas sênior. Para um representante comercial de LED e materiais de construção no Brasil, crie 3 abordagens de prospecção criativas e práticas para o seguinte objetivo do dia: "${objective}". Para cada abordagem, inclua um exemplo de frase de abertura curta e impactante. A resposta deve ser em português do Brasil, bem formatada com títulos e listas.`;
+                const response = await callGemini(prompt);
+                geminiResult.innerHTML = response.replace(/\n/g, '<br>');
+                loadingSpinner.classList.add('hidden');
+                generateButton.disabled = false;
+                generateButtonText.textContent = 'Gerar Estratégias';
+            }
+
+            async function getDailyFocus(day) {
+                const storageKey = `day_${day}_focus`;
+                let focus = localStorage.getItem(storageKey);
+                if (!focus) {
+                    motivationalQuote.textContent = "Gerando uma nova inspiração...";
+                    const prompt = `Gere uma frase curta e poderosa de 'foco do dia' para um representante de vendas de alta performance que está em um desafio de 30 dias. A frase deve ser inspiradora e prática, em português do Brasil. Responda apenas com a frase, sem aspas.`;
+                    focus = await callGemini(prompt);
+                    localStorage.setItem(storageKey, focus);
+                }
+                motivationalQuote.textContent = `"${focus}"`;
+            }
+
+            // --- PLANNER CORE LOGIC ---
+            function getScheduleForDay(day) {
+                const daySchedule = localStorage.getItem(`day_${day}_schedule`);
+                if (daySchedule) return JSON.parse(daySchedule);
+                const defaultSchedule = localStorage.getItem('custom_default_schedule');
+                if (defaultSchedule) return JSON.parse(defaultSchedule);
+                return JSON.parse(JSON.stringify(initialSchedule)); // Deep copy
+            }
+
+            function saveScheduleForDay(day, schedule) {
+                localStorage.setItem(`day_${day}_schedule`, JSON.stringify(schedule));
+            }
+
+            function renderTasks() {
+                taskList.innerHTML = '';
+                const savedProgress = JSON.parse(localStorage.getItem(`day_${currentDay}_progress`)) || {};
+
+                if (currentSchedule.length === 0) {
+                    taskList.innerHTML = `<div class="text-center text-gray-500 p-4">Nenhuma tarefa para hoje. Adicione uma no modo de edição.</div>`;
+                    updateProgress();
+                    return;
+                }
+
+                currentSchedule.forEach((task, index) => {
+                    const isCompleted = savedProgress[index] === true;
+                    const taskElement = document.createElement('div');
+                    taskElement.className = 'task-item flex items-center p-4 bg-white border border-gray-200 rounded-lg shadow-sm';
+                    taskElement.dataset.index = index;
+
+                    const editControls = isEditMode ? `
+                        <div class="edit-task-controls ml-auto flex items-center gap-2">
+                            <button class="edit-btn text-blue-500 hover:text-blue-700">✏️</button>
+                            <button class="delete-btn text-red-500 hover:text-red-700">🗑️</button>
+                        </div>
+                    ` : '';
+
+                    const geminiButton = !isEditMode && task.gemini ? `<button class="gemini-strategy-btn ml-auto bg-purple-100 text-purple-700 text-xs font-bold py-1 px-3 rounded-full hover:bg-purple-200">✨ IA</button>` : '';
+
+                    taskElement.innerHTML = `
+                        <div class="flex-shrink-0 text-2xl mr-4">${task.icon || '📝'}</div>
+                        <div class="flex-grow">
+                            <p class="font-semibold text-gray-800">${task.task}</p>
+                            <p class="text-sm text-gray-500">${task.time}</p>
+                        </div>
+                        ${geminiButton}
+                        ${editControls}
+                        <input type="checkbox" class="h-6 w-6 rounded text-blue-600 focus:ring-blue-500 cursor-pointer ml-4" ${isCompleted ? 'checked' : ''} ${isEditMode ? 'disabled' : ''}>
+                    `;
+                    taskList.appendChild(taskElement);
+                });
+                updateProgress();
+            }
+
+            function loadDay(day) {
+                currentSchedule = getScheduleForDay(day);
+                renderTasks();
+                getDailyFocus(day);
+            }
+
+            function updateProgress() {
+                const checkboxes = taskList.querySelectorAll('input[type="checkbox"]');
+                if (checkboxes.length === 0) {
+                    progressBar.style.width = '0%';
+                    progressTitle.textContent = `Progresso do Dia ${currentDay}: 0%`;
+                    return;
+                }
+                const completedTasks = Array.from(checkboxes).filter(cb => cb.checked).length;
+                const percentage = (completedTasks / checkboxes.length) * 100;
+                progressBar.style.width = `${percentage}%`;
+                progressTitle.textContent = `Progresso do Dia ${currentDay}: ${Math.round(percentage)}%`;
+            }
+
+            function saveProgress() {
+                const checkboxes = taskList.querySelectorAll('input[type="checkbox"]');
+                const progressState = {};
+                checkboxes.forEach((cb, index) => {
+                    progressState[index] = cb.checked;
+                });
+                localStorage.setItem(`day_${currentDay}_progress`, JSON.stringify(progressState));
+            }
+            
+            function showConfirmation(text, onConfirm) {
+                confirmResetText.textContent = text;
+                confirmCallback = onConfirm;
+                confirmResetModal.classList.remove('hidden');
+                confirmResetModal.classList.add('flex');
+            }
+
+            // --- EDIT MODE LOGIC ---
+            function handleToggleEditMode() {
+                isEditMode = !isEditMode;
+                toggleEditMode.innerHTML = isEditMode ? '✅ Concluir' : '✏️ Editar';
+                toggleEditMode.classList.toggle('bg-green-500', isEditMode);
+                toggleEditMode.classList.toggle('hover:bg-green-600', isEditMode);
+                toggleEditMode.classList.toggle('bg-blue-500', !isEditMode);
+                toggleEditMode.classList.toggle('hover:bg-blue-600', !isEditMode);
+                
+                editModeControls.classList.toggle('hidden');
+                addTaskForm.classList.toggle('hidden');
+                renderTasks(); // Re-render to show/hide controls
+            }
+
+            function handleAddTask(e) {
+                e.preventDefault();
+                const timeInput = document.getElementById('newTaskTime');
+                const descInput = document.getElementById('newTaskDesc');
+                const time = timeInput.value.trim();
+                const task = descInput.value.trim();
+
+                if (time && task) {
+                    currentSchedule.push({ time, task, icon: '🆕' });
+                    saveScheduleForDay(currentDay, currentSchedule);
+                    renderTasks();
+                    timeInput.value = '';
+                    descInput.value = '';
+                }
+            }
+            
+            function handleDeleteTask(index) {
+                currentSchedule.splice(index, 1);
+                saveScheduleForDay(currentDay, currentSchedule);
+                renderTasks();
+            }
+
+            function handleEditTask(index) {
+                const taskElement = taskList.querySelector(`[data-index='${index}']`);
+                const task = currentSchedule[index];
+                taskElement.innerHTML = `
+                    <div class="flex-grow flex flex-col md:flex-row gap-2 w-full">
+                        <input type="text" value="${task.time}" class="edit-time-input border p-2 rounded-md flex-1">
+                        <input type="text" value="${task.task}" class="edit-task-input border p-2 rounded-md flex-grow-[2]">
+                    </div>
+                    <div class="ml-2 flex gap-2">
+                        <button class="save-edit-btn text-green-500 hover:text-green-700">✔️</button>
+                        <button class="cancel-edit-btn text-gray-500 hover:text-gray-700">❌</button>
+                    </div>
+                `;
+            }
+
+            function handleSaveEdit(index) {
+                const taskElement = taskList.querySelector(`[data-index='${index}']`);
+                const newTime = taskElement.querySelector('.edit-time-input').value;
+                const newTask = taskElement.querySelector('.edit-task-input').value;
+                currentSchedule[index].time = newTime;
+                currentSchedule[index].task = newTask;
+                saveScheduleForDay(currentDay, currentSchedule);
+                renderTasks();
+            }
+
+            // --- INITIALIZATION & EVENT LISTENERS ---
+            function initializePlanner() {
+                for (let i = 1; i <= totalDays; i++) {
+                    const dayButton = document.createElement('button');
+                    dayButton.textContent = `Dia ${i}`;
+                    dayButton.dataset.day = i;
+                    dayButton.className = 'px-4 py-2 rounded-lg text-sm font-medium bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors';
+                    if (i === 1) dayButton.classList.add('active');
+                    daySelector.appendChild(dayButton);
+                }
+                loadDay(currentDay);
+            }
+
+            daySelector.addEventListener('click', (e) => {
+                if (e.target.tagName === 'BUTTON' && !isEditMode) {
+                    const selectedDay = parseInt(e.target.dataset.day);
+                    if (selectedDay !== currentDay) {
+                        currentDay = selectedDay;
+                        loadDay(currentDay);
+                        document.querySelectorAll('#daySelector button').forEach(btn => btn.classList.remove('active'));
+                        e.target.classList.add('active');
+                    }
+                } else if (isEditMode) {
+                    alert("Saia do modo de edição para mudar de dia.");
+                }
+            });
+
+            taskList.addEventListener('change', (e) => {
+                if (e.target.type === 'checkbox') saveProgress();
+                updateProgress();
+            });
+            
+            taskList.addEventListener('click', (e) => {
+                const target = e.target;
+                const taskElement = target.closest('.task-item');
+                if (!taskElement) return;
+                const index = parseInt(taskElement.dataset.index);
+
+                if (target.closest('.gemini-strategy-btn')) {
+                    geminiModal.classList.remove('hidden');
+                    geminiModal.classList.add('flex');
+                } else if (target.closest('.delete-btn')) {
+                    handleDeleteTask(index);
+                } else if (target.closest('.edit-btn')) {
+                    handleEditTask(index);
+                } else if (target.closest('.save-edit-btn')) {
+                    handleSaveEdit(index);
+                } else if (target.closest('.cancel-edit-btn')) {
+                    renderTasks();
+                }
+            });
+
+            toggleEditMode.addEventListener('click', handleToggleEditMode);
+            addTaskForm.addEventListener('submit', handleAddTask);
+            
+            saveAsDefaultButton.addEventListener('click', () => {
+                showConfirmation("Isso substituirá sua rotina padrão por esta. Deseja continuar?", () => {
+                    localStorage.setItem('custom_default_schedule', JSON.stringify(currentSchedule));
+                    alert("Rotina padrão salva com sucesso!");
+                });
+            });
+
+            resetToDefaultButton.addEventListener('click', () => {
+                showConfirmation("Isso substituirá a rotina deste dia pela padrão. Deseja continuar?", () => {
+                    localStorage.removeItem(`day_${currentDay}_schedule`);
+                    loadDay(currentDay);
+                });
+            });
+
+            resetProgressButton.addEventListener('click', () => {
+                showConfirmation("Tem certeza que deseja resetar o progresso deste dia?", () => {
+                    localStorage.removeItem(`day_${currentDay}_progress`);
+                    loadDay(currentDay);
+                });
+            });
+
+            // Modal Listeners
+            closeModalButton.addEventListener('click', () => geminiModal.classList.add('hidden'));
+            generateButton.addEventListener('click', generateSalesStrategy);
+            cancelResetButton.addEventListener('click', () => confirmResetModal.classList.add('hidden'));
+            confirmResetAction.addEventListener('click', () => {
+                if (confirmCallback) confirmCallback();
+                confirmResetModal.classList.add('hidden');
+                confirmCallback = null;
+            });
+
+            initializePlanner();
+        });
+    </script>
+</body>
+</html>
