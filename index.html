@@ -19,6 +19,9 @@
         /* Oculta o modo PDF por padrão na tela */
         .pdf-view { display: none; }
         
+        /* Oculta elementos exclusivos do cliente na tela de edição */
+        .client-only { display: none !important; }
+        
         /* Quando a classe 'is-generating-pdf' é ativada no body */
         body.is-generating-pdf .edit-view { display: none !important; }
         body.is-generating-pdf .pdf-view { display: flex !important; }
@@ -27,6 +30,15 @@
         
         /* Quebras de página seguras para o PDF */
         .break-inside-avoid { break-inside: avoid; }
+        
+        /* Estilos ESPECÍFICOS do PDF para o Cliente Final */
+        body.pdf-type-cliente .internal-only { display: none !important; }
+        body.pdf-type-cliente .client-title { display: inline !important; }
+        body.pdf-type-cliente .internal-title { display: none !important; }
+        body.pdf-type-cliente .client-only { display: block !important; } /* Revela elementos formais do cliente */
+        body.pdf-type-cliente #pdf-content { background-color: #ffffff; padding: 2rem 3rem; } /* Fundo branco tipo papel timbrado */
+        
+        .client-title { display: none; }
     </style>
 </head>
 <body class="min-h-screen bg-slate-200 p-2 md:p-6 text-slate-800 flex justify-center">
@@ -34,25 +46,57 @@
     <!-- Contentor Principal para PDF -->
     <div id="pdf-content" class="w-full max-w-5xl bg-slate-100 p-4 md:p-8 rounded-xl shadow-sm space-y-6">
         
-        <!-- CABEÇALHO -->
-        <div class="bg-slate-900 text-white p-6 rounded-2xl shadow-lg flex flex-col md:flex-row justify-between items-center md:items-start gap-4">
+        <!-- CABEÇALHO COMERCIAL FORMAL (Aparece apenas no PDF do Cliente) -->
+        <div class="client-only border-b-2 border-slate-100 pb-6 mb-2 break-inside-avoid">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-3xl font-black text-slate-800 tracking-tight">Proposta Comercial</h1>
+                    <p class="text-slate-500 font-medium mt-1">Serviços Especializados de Instalação</p>
+                </div>
+                <div class="text-right">
+                    <!-- Espaço para futura Logo -->
+                    <div class="w-12 h-12 bg-slate-100 rounded-lg flex items-center justify-center text-slate-400 mb-2 ml-auto border border-slate-200">
+                        <i data-lucide="image" class="w-6 h-6"></i>
+                    </div>
+                    <p class="text-xs font-semibold text-slate-400 uppercase tracking-widest" id="data-atual">Data: 00/00/0000</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- CABEÇALHO DO SISTEMA (Oculto no PDF do Cliente) -->
+        <div class="internal-only bg-slate-900 text-white p-6 rounded-2xl shadow-lg flex flex-col md:flex-row justify-between items-center md:items-start gap-4 break-inside-avoid">
             <div class="flex items-center space-x-4">
                 <div class="bg-blue-500 p-3 rounded-xl">
                     <i data-lucide="calculator" class="w-8 h-8 text-white"></i>
                 </div>
                 <div>
-                    <h1 class="text-2xl font-bold">Relatório de Instalação</h1>
-                    <p class="text-slate-300 text-sm">Controle de Mão de Obra & Custos</p>
+                    <h1 class="text-2xl font-bold">
+                        <span class="internal-title">Relatório de Instalação</span>
+                        <span class="client-title">Orçamento de Instalação</span>
+                    </h1>
+                    <p class="text-slate-300 text-sm">
+                        <span class="internal-title">Controle de Mão de Obra & Custos</span>
+                        <span class="client-title">Proposta de Prestação de Serviço</span>
+                    </p>
                 </div>
             </div>
 
-            <div data-html2canvas-ignore="true" class="w-full md:w-auto flex flex-col items-end gap-2">
-                <button id="btn-gerar-pdf" class="w-full md:w-auto bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-3 px-6 rounded-xl flex justify-center items-center transition-colors shadow-md text-sm">
-                    <i data-lucide="download" class="w-4 h-4 mr-2" id="pdf-icon-normal"></i>
-                    <i data-lucide="loader-2" class="w-4 h-4 mr-2 animate-spin hidden" id="pdf-icon-loading"></i>
-                    <span id="pdf-btn-text">Baixar Relatório (PDF)</span>
+            <div data-html2canvas-ignore="true" class="w-full md:w-auto flex flex-col sm:flex-row items-end sm:items-center gap-2">
+                <!-- Botão Cliente -->
+                <button id="btn-gerar-pdf-cliente" class="w-full sm:w-auto bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 px-4 rounded-xl flex justify-center items-center transition-colors shadow-md text-sm">
+                    <i data-lucide="file-text" class="w-4 h-4 mr-2" id="pdf-icon-cliente-normal"></i>
+                    <i data-lucide="loader-2" class="w-4 h-4 mr-2 animate-spin hidden" id="pdf-icon-cliente-loading"></i>
+                    <span id="pdf-btn-cliente-text">PDF Cliente</span>
                 </button>
-                <span id="pdf-error" class="text-red-400 text-xs hidden">Erro ao gerar PDF.</span>
+                
+                <!-- Botão Equipe -->
+                <button id="btn-gerar-pdf-interno" class="w-full sm:w-auto bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-3 px-4 rounded-xl flex justify-center items-center transition-colors shadow-md text-sm">
+                    <i data-lucide="download" class="w-4 h-4 mr-2" id="pdf-icon-interno-normal"></i>
+                    <i data-lucide="loader-2" class="w-4 h-4 mr-2 animate-spin hidden" id="pdf-icon-interno-loading"></i>
+                    <span id="pdf-btn-interno-text">PDF Equipe</span>
+                </button>
+                
+                <span id="pdf-error" class="text-red-400 text-xs hidden w-full text-right sm:text-center mt-1">Erro no PDF.</span>
             </div>
         </div>
 
@@ -118,8 +162,10 @@
                 <!-- Bloco 1: Escopo e Mão de Obra -->
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 break-inside-avoid">
                     <h2 class="text-lg font-bold mb-4 flex items-center text-slate-800 border-b pb-2 border-slate-100">
-                        <i data-lucide="ruler" class="w-5 h-5 mr-2 text-indigo-500"></i>
-                        Dimensionamento de Mão de Obra
+                        <i data-lucide="check-square" class="w-5 h-5 mr-2 text-indigo-500 client-only"></i>
+                        <i data-lucide="ruler" class="w-5 h-5 mr-2 text-indigo-500 internal-only"></i>
+                        <span class="internal-only">Dimensionamento de Mão de Obra</span>
+                        <span class="client-only">Escopo do Serviço</span>
                     </h2>
                     
                     <!-- Modo PDF -->
@@ -199,13 +245,15 @@
                 <!-- Bloco 2: Deslocamento (Adicionado como Custo Direto ao Orçamento) -->
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 break-inside-avoid">
                     <h2 class="text-lg font-bold mb-4 flex items-center text-slate-800 border-b pb-2 border-slate-100">
-                        <i data-lucide="car" class="w-5 h-5 mr-2 text-blue-500"></i>
-                        Deslocamento
+                        <i data-lucide="map" class="w-5 h-5 mr-2 text-blue-500 client-only"></i>
+                        <i data-lucide="car" class="w-5 h-5 mr-2 text-blue-500 internal-only"></i>
+                        <span class="internal-only">Deslocamento</span>
+                        <span class="client-only">Logística e Deslocamento</span>
                     </h2>
 
                     <!-- Modo PDF -->
                     <div class="pdf-view flex justify-between items-center p-3 bg-slate-50 rounded-xl">
-                        <span class="font-semibold text-slate-700">Custo Adicional de Transporte (<span class="out-distanciaKm"></span> km)</span>
+                        <span class="font-semibold text-slate-700">Taxa de Logística Operacional (<span class="out-distanciaKm"></span> km)</span>
                         <span class="font-bold text-slate-900 out-custoCarro"></span>
                     </div>
 
@@ -237,7 +285,7 @@
                 </div>
 
                 <!-- Bloco 3: Outras Despesas -->
-                <div class="edit-view flex-col bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4 break-inside-avoid">
+                <div class="edit-view flex-col bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4 break-inside-avoid internal-only">
                     <h2 class="text-lg font-bold flex items-center text-slate-800 border-b pb-2 border-slate-100">
                         <i data-lucide="receipt" class="w-5 h-5 mr-2 text-red-400"></i>
                         Outras Despesas do Dia (Serão divididas)
@@ -264,15 +312,18 @@
                 
                 <!-- O VALOR DO ORÇAMENTO PARA O CLIENTE -->
                 <div class="bg-gradient-to-r from-emerald-600 to-teal-700 text-white p-6 rounded-2xl shadow-lg border border-emerald-500 break-inside-avoid">
-                    <span class="text-xs font-bold uppercase tracking-widest text-emerald-100 block mb-1">Orçamento Final Sugerido</span>
+                    <span class="text-xs font-bold uppercase tracking-widest text-emerald-100 block mb-1">
+                        <span class="internal-only">Orçamento Final Sugerido</span>
+                        <span class="client-only">Valor Total do Investimento</span>
+                    </span>
                     <h3 class="text-3xl font-black out-valorTotalOrcamento">R$ 0,00</h3>
                     <p class="text-xs text-emerald-100 mt-2">
-                        Soma de <span class="font-bold">Mão de Obra (<span class="out-subtotalMaoDeObra"></span>)</span> + <span class="font-bold">Deslocamento (<span class="out-custoCarro"></span>)</span>.
+                        Referente a <span class="font-bold">Mão de Obra (<span class="out-subtotalMaoDeObra"></span>)</span> + <span class="font-bold">Logística (<span class="out-custoCarro"></span>)</span>.
                     </p>
                 </div>
 
                 <!-- Balanço Financeiro Escuro -->
-                <div class="bg-slate-900 text-white p-6 rounded-2xl shadow-lg break-inside-avoid">
+                <div class="bg-slate-900 text-white p-6 rounded-2xl shadow-lg break-inside-avoid internal-only">
                     <h2 class="text-lg font-bold mb-4 text-slate-100 flex items-center">
                         <i data-lucide="piggy-bank" class="w-5 h-5 mr-2 text-indigo-400"></i>
                         Balanço Financeiro da Obra
@@ -320,35 +371,29 @@
 
                     <div class="bg-slate-800 p-4 rounded-xl border border-slate-700">
                         <div class="text-center">
-                            <p class="text-slate-400 text-sm mb-1 uppercase tracking-wider font-semibold">Montante Limpo para Divisão (3 Partes)</p>
+                            <p class="text-slate-400 text-sm mb-1 uppercase tracking-wider font-semibold">Montante Limpo para Divisão (<span class="out-qtdEquipeText">3</span> Partes)</p>
                             <p class="text-3xl font-black text-emerald-400 font-mono out-valorParaDividir">R$ 0,00</p>
                         </div>
                     </div>
                 </div>
 
                 <!-- Repasse Final -->
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-emerald-500 border-t-4 break-inside-avoid">
-                    <h2 class="text-lg font-bold mb-6 flex items-center text-slate-800">
-                        <i data-lucide="users" class="w-5 h-5 mr-2 text-blue-500"></i>
-                        Repasse de Comissão & Custos (PIX)
-                    </h2>
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-emerald-500 border-t-4 break-inside-avoid internal-only">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                        <h2 class="text-lg font-bold flex items-center text-slate-800">
+                            <i data-lucide="users" class="w-5 h-5 mr-2 text-blue-500"></i>
+                            Repasse de Comissão & Custos (PIX)
+                        </h2>
+                        <!-- Controle de Equipe (Visível apenas na edição) -->
+                        <div class="flex items-center space-x-2 bg-slate-100 p-2 rounded-lg border border-slate-200 edit-view">
+                            <label class="text-xs font-semibold text-slate-600">Total na Equipe:</label>
+                            <input type="number" id="in-qtdEquipe" value="3" min="1" class="w-16 p-1 text-center bg-white border border-slate-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 input-calc">
+                        </div>
+                    </div>
 
                     <div class="space-y-4">
-                        <div class="flex justify-between items-center p-3 bg-slate-50 rounded-lg border border-slate-200">
-                            <div>
-                                <p class="font-bold text-slate-700">Parceiro Instalador 1</p>
-                                <p class="text-xs text-slate-500">1/3 do Lucro Líquido</p>
-                            </div>
-                            <span class="font-black text-xl text-emerald-600 out-cotaIndividual">R$ 0,00</span>
-                        </div>
-
-                        <div class="flex justify-between items-center p-3 bg-slate-50 rounded-lg border border-slate-200">
-                            <div>
-                                <p class="font-bold text-slate-700">Parceiro Instalador 2</p>
-                                <p class="text-xs text-slate-500">1/3 do Lucro Líquido</p>
-                            </div>
-                            <span class="font-black text-xl text-emerald-600 out-cotaIndividual">R$ 0,00</span>
-                        </div>
+                        <!-- Container Dinâmico de Parceiros -->
+                        <div id="container-parceiros" class="space-y-4"></div>
 
                         <div class="flex flex-col p-4 bg-blue-50 rounded-xl border border-blue-200 mt-4">
                             <div class="flex justify-between items-start mb-2">
@@ -357,7 +402,7 @@
                             </div>
                             <div class="text-xs text-blue-700 mt-2 border-t border-blue-200 pt-2 space-y-1">
                                 <div class="flex justify-between">
-                                    <span>Sua Cota Individual (1/3):</span>
+                                    <span>Sua Cota Individual (<span class="out-fracaoEquipe">1/3</span>):</span>
                                     <span class="font-semibold out-cotaIndividual">R$ 0,00</span>
                                 </div>
                                 <div class="flex justify-between text-blue-900 font-medium">
@@ -373,6 +418,29 @@
                     </div>
                 </div>
 
+            </div>
+        </div>
+
+        <!-- TERMOS E CONDIÇÕES FORMAIS (Aparece apenas no PDF do Cliente) -->
+        <div class="client-only mt-12 pt-8 border-t-2 border-slate-100 break-inside-avoid">
+            <h4 class="font-bold text-slate-700 mb-3 text-sm uppercase tracking-wider">Termos e Condições Gerais</h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs text-slate-500">
+                <ul class="list-disc pl-4 space-y-2">
+                    <li>A proposta é válida por <span class="font-bold text-slate-700">15 dias</span> a partir desta data.</li>
+                    <li>O orçamento contempla exclusivamente a prestação de serviços (mão de obra técnica).</li>
+                    <li>Materiais, produtos e estruturas não listados acima são de responsabilidade do contratante.</li>
+                </ul>
+                <ul class="list-disc pl-4 space-y-2">
+                    <li>O ambiente deve estar liberado e com infraestrutura elétrica básica (pontos de energia) pronta no local.</li>
+                    <li>Oferecemos garantia de <span class="font-bold text-slate-700">90 dias</span> sobre o serviço de instalação executado.</li>
+                </ul>
+            </div>
+            
+            <div class="mt-16 text-center pt-8">
+                <div class="w-72 border-t border-slate-400 mx-auto pt-2">
+                    <p class="text-slate-800 font-bold text-sm">Assinatura de Aceite do Cliente</p>
+                    <p class="text-slate-400 text-xs mt-1">Concordo com os serviços e valores descritos acima</p>
+                </div>
             </div>
         </div>
 
@@ -495,11 +563,33 @@
             // 6. Divisão e Fundo
             const valorReserva = lucroPositivo ? sobraLiquida * (taxaReserva / 100) : 0;
             const valorParaDividir = lucroPositivo ? sobraLiquida - valorReserva : 0;
-            const cotaIndividual = valorParaDividir / 3;
+            
+            // Puxar a quantidade da equipe (Mínimo de 1 para evitar erro de divisão)
+            let qtdEquipe = getNum('in-qtdEquipe');
+            if (qtdEquipe < 1) qtdEquipe = 1; 
+            
+            const cotaIndividual = valorParaDividir / qtdEquipe;
             
             updateOutText('out-valorReserva', formatadorMoeda.format(valorReserva));
             updateOutText('out-valorParaDividir', formatadorMoeda.format(valorParaDividir));
             updateOutText('out-cotaIndividual', formatadorMoeda.format(cotaIndividual));
+            updateOutText('out-qtdEquipeText', qtdEquipe);
+            updateOutText('out-fracaoEquipe', `1/${qtdEquipe}`);
+
+            // Gerar blocos de parceiros dinamicamente baseados na quantidade escolhida
+            const containerParceiros = document.getElementById('container-parceiros');
+            containerParceiros.innerHTML = '';
+            for (let i = 1; i < qtdEquipe; i++) {
+                containerParceiros.innerHTML += `
+                    <div class="flex justify-between items-center p-3 bg-slate-50 rounded-lg border border-slate-200 break-inside-avoid">
+                        <div>
+                            <p class="font-bold text-slate-700">Parceiro Instalador ${i}</p>
+                            <p class="text-xs text-slate-500">1/${qtdEquipe} do Lucro Líquido</p>
+                        </div>
+                        <span class="font-black text-xl text-emerald-600">${formatadorMoeda.format(cotaIndividual)}</span>
+                    </div>
+                `;
+            }
 
             // 7. Repasse Pessoal
             const totalReembolsos = despesasOperacionais;
@@ -514,21 +604,34 @@
             input.addEventListener('input', calculate);
         });
 
-        // Configuração de Geração do PDF
-        const btnGerarPdf = document.getElementById('btn-gerar-pdf');
-        
-        btnGerarPdf.addEventListener('click', () => {
-            // Alterar o visual do botão para loading
-            btnGerarPdf.disabled = true;
-            btnGerarPdf.classList.add('bg-slate-500');
-            btnGerarPdf.classList.remove('bg-emerald-500', 'hover:bg-emerald-600');
-            document.getElementById('pdf-icon-normal').classList.add('hidden');
-            document.getElementById('pdf-icon-loading').classList.remove('hidden');
-            document.getElementById('pdf-btn-text').textContent = "Gerando PDF...";
+        // Configuração de Geração dos PDFs
+        function gerarPDF(tipo) {
+            const isCliente = tipo === 'cliente';
+            
+            // Referências dinâmicas aos botões e ícones
+            const btnId = isCliente ? 'btn-gerar-pdf-cliente' : 'btn-gerar-pdf-interno';
+            const iconNormal = isCliente ? 'pdf-icon-cliente-normal' : 'pdf-icon-interno-normal';
+            const iconLoading = isCliente ? 'pdf-icon-cliente-loading' : 'pdf-icon-interno-loading';
+            const textId = isCliente ? 'pdf-btn-cliente-text' : 'pdf-btn-interno-text';
+            const originalText = isCliente ? 'PDF Cliente' : 'PDF Equipe';
+            const colorClass = isCliente ? 'bg-blue-500' : 'bg-emerald-500';
+            const hoverClass = isCliente ? 'hover:bg-blue-600' : 'hover:bg-emerald-600';
+            
+            const btnTarget = document.getElementById(btnId);
+
+            // 1. Alterar o visual do botão para loading
+            btnTarget.disabled = true;
+            btnTarget.classList.add('bg-slate-500');
+            btnTarget.classList.remove(colorClass, hoverClass);
+            document.getElementById(iconNormal).classList.add('hidden');
+            document.getElementById(iconLoading).classList.remove('hidden');
+            document.getElementById(textId).textContent = "Gerando...";
             document.getElementById('pdf-error').classList.add('hidden');
 
-            // 1. Preparar a interface para PDF (Ocultar inputs, Mostrar colunas empilhadas)
+            // 2. Preparar a interface para PDF (Ocultar inputs, Mostrar colunas empilhadas e ocultar módulos se for cliente)
             document.body.classList.add('is-generating-pdf');
+            if (isCliente) document.body.classList.add('pdf-type-cliente');
+            
             const columns = document.getElementById('main-columns');
             columns.classList.remove('lg:grid-cols-2', 'grid');
             columns.classList.add('flex', 'flex-col');
@@ -539,7 +642,9 @@
                 if(clienteNomeStr !== '') {
                     clienteNomeStr = '-' + clienteNomeStr.replace(/\s+/g, '-');
                 }
-                const nomeArquivo = `Relatorio-Instalacao${clienteNomeStr}.pdf`;
+                
+                const prefixoArquivo = isCliente ? 'Orcamento' : 'Relatorio-Equipe';
+                const nomeArquivo = `${prefixoArquivo}${clienteNomeStr}.pdf`;
 
                 const opt = {
                     margin: [15, 15, 15, 15],
@@ -551,34 +656,38 @@
                 };
 
                 html2pdf().set(opt).from(element).save().then(() => {
-                    // Restaurar interface após gerar
-                    document.body.classList.remove('is-generating-pdf');
-                    columns.classList.remove('flex', 'flex-col');
-                    columns.classList.add('lg:grid-cols-2', 'grid');
-                    
-                    // Restaurar botão
-                    btnGerarPdf.disabled = false;
-                    btnGerarPdf.classList.remove('bg-slate-500');
-                    btnGerarPdf.classList.add('bg-emerald-500', 'hover:bg-emerald-600');
-                    document.getElementById('pdf-icon-normal').classList.remove('hidden');
-                    document.getElementById('pdf-icon-loading').classList.add('hidden');
-                    document.getElementById('pdf-btn-text').textContent = "Baixar Relatório (PDF)";
+                    restaurarInterface(btnTarget, colorClass, hoverClass, iconNormal, iconLoading, textId, originalText);
                 }).catch(err => {
                     console.error('Erro ao gerar PDF:', err);
                     document.getElementById('pdf-error').classList.remove('hidden');
-                    // Restaurar em caso de erro
-                    document.body.classList.remove('is-generating-pdf');
-                    columns.classList.remove('flex', 'flex-col');
-                    columns.classList.add('lg:grid-cols-2', 'grid');
-                    btnGerarPdf.disabled = false;
-                    btnGerarPdf.classList.remove('bg-slate-500');
-                    btnGerarPdf.classList.add('bg-emerald-500');
-                    document.getElementById('pdf-icon-normal').classList.remove('hidden');
-                    document.getElementById('pdf-icon-loading').classList.add('hidden');
-                    document.getElementById('pdf-btn-text').textContent = "Baixar Relatório (PDF)";
+                    restaurarInterface(btnTarget, colorClass, hoverClass, iconNormal, iconLoading, textId, originalText);
                 });
             }, 300); // Aguarda a troca de CSS acontecer
-        });
+        }
+
+        function restaurarInterface(btnTarget, colorClass, hoverClass, iconNormal, iconLoading, textId, originalText) {
+            const columns = document.getElementById('main-columns');
+            // Restaurar documento
+            document.body.classList.remove('is-generating-pdf', 'pdf-type-cliente');
+            columns.classList.remove('flex', 'flex-col');
+            columns.classList.add('lg:grid-cols-2', 'grid');
+            
+            // Restaurar botão
+            btnTarget.disabled = false;
+            btnTarget.classList.remove('bg-slate-500');
+            btnTarget.classList.add(colorClass, hoverClass);
+            document.getElementById(iconNormal).classList.remove('hidden');
+            document.getElementById(iconLoading).classList.add('hidden');
+            document.getElementById(textId).textContent = originalText;
+        }
+
+        // Atribuir eventos aos botões
+        document.getElementById('btn-gerar-pdf-cliente').addEventListener('click', () => gerarPDF('cliente'));
+        document.getElementById('btn-gerar-pdf-interno').addEventListener('click', () => gerarPDF('interno'));
+
+        // Configurar a Data Atual para o Orçamento
+        const dataHoje = new Date().toLocaleDateString('pt-BR');
+        document.getElementById('data-atual').textContent = `Data: ${dataHoje}`;
 
         // Inicializa cálculos na primeira vez
         calculate();
